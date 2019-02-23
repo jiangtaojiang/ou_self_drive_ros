@@ -10,13 +10,14 @@ from RADARDetection import RADARDetection
 sendStatus = False
 
 
-def receiveAndPackAndSendRadarData(sock, index, short_range_q, long_range_q):
+def receiveAndPackAndSendRadarData(sock, index, short_range_q):
     nearScanTimeStamp = 0
     farScanTimeStamp = 0
     short_range_list = []
     long_range_list = []
     long_range_messages_received = []
     short_range_messages_received = []
+    counter = 0
     for i in range(0, 6):
         short_range_messages_received.append(0)
         long_range_messages_received.append(0)
@@ -94,8 +95,7 @@ def receiveAndPackAndSendRadarData(sock, index, short_range_q, long_range_q):
 
             index = messageCounter - 1
             if (HeaderID == 14417921 or HeaderID == 14417922):
-                is_long_range = True
-                long_range_messages_received[index] += 1
+                continue #skip long range messages
             else:
                 is_long_range = False
                 short_range_messages_received[index] += 1
@@ -152,20 +152,15 @@ def receiveAndPackAndSendRadarData(sock, index, short_range_q, long_range_q):
                 # radarDetectionList can be appended by an object created from all the extracted values in the current for-loop iteration
                 detection = RADARDetection()
                 detection.r = f_Range * 0.004577776
-                detection.theta = f_AzAng1 * 9.58767E-05
+                detection.theta = f_AzAng0 * 9.58767E-05
                 detection.phi = f_ElAng * 9.58767E-05
-                detection.rcs = f_RCS0 * 0.003051851
+                detection.rcs = f_RCS1 * 0.003051851
                 detection.pdh = int(f_Pdh0)
                 detection.snr = f_SNR
-                detection.long_range = is_long_range;
-                if is_long_range:
-                    long_range_list.append(detection)
-                else:
-                    short_range_list.append(detection)
+                detection.vrel = f_VrelRad * 0.004577776
+                detection.long_range = is_long_range
 
-
-            #this forces the thread to wait until the UI has cleared out the queue before adding more points. Probably
-            #not a good idea to have this in the production code
+                short_range_list.append(detection)
 
             packet_ready = True
             for message_rxd in short_range_messages_received:
@@ -173,22 +168,10 @@ def receiveAndPackAndSendRadarData(sock, index, short_range_q, long_range_q):
                     packet_ready = False
 
             if packet_ready and len(short_range_list) > 0:
-                short_range_q.put(short_range_list.copy())
-                for i in range(0,6):
+                short_range_q.put_nowait(short_range_list.copy())
+                for i in range(0, 6):
                     short_range_messages_received[i] = 0
                 short_range_list.clear()
-
-            packet_ready = True
-            for message_rxd in long_range_messages_received:
-                if message_rxd < 3:
-                    packet_ready = False
-
-            if packet_ready and len(long_range_list) > 0:
-                long_range_q.put(long_range_list.copy())
-                for i in range(0, 6):
-                    long_range_messages_received[i] = 0
-                long_range_list.clear()
-
 
 
             if (HeaderID == 14417921 or HeaderID == 14417922):
