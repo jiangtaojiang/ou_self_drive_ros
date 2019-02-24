@@ -10,7 +10,7 @@ int main(int argc, char** argv)
   ros::NodeHandle pn("~");
 
   // Instantiate node class
-  new_package_name::NodeClass node(n, pn); 
+  yolo::YOLONode node(n, pn); 
 
   // Spin and process callbacks
   ros::spin();
