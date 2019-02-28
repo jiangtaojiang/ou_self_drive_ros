@@ -10,7 +10,7 @@ namespace lane_detection
 LaneDetection::LaneDetection(ros::NodeHandle n, ros::NodeHandle pn)
 {
   sub_cam_info_ = n.subscribe("camera_info", 1, &LaneDetection::recvCameraInfo, this);
-  sub_image_ = n.subscribe("image_raw", 1, &LaneDetection::recvImage, this);
+  sub_image_ = n.subscribe("image_rect_color", 1, &LaneDetection::recvImage, this);
   pub_line_visualization_ = n.advertise<visualization_msgs::Marker>("viz_line_obstacles", 1);
   pub_solid_line_cloud_ = n.advertise<sensor_msgs::PointCloud>("solid_line_cloud", 1);
   pub_dashed_line_cloud_ = n.advertise<sensor_msgs::PointCloud>("dashed_line_cloud", 1);
@@ -19,6 +19,7 @@ LaneDetection::LaneDetection(ros::NodeHandle n, ros::NodeHandle pn)
   srv_.setCallback(boost::bind(&LaneDetection::reconfig, this, _1, _2));
 
   downsample_count = 0;
+  looked_up_camera_transform_ = false;
 
 #if DEBUG
   namedWindow("Output Image", CV_WINDOW_NORMAL);
@@ -219,6 +220,19 @@ int LaneDetection::sampleCurve(const Eigen::VectorXd& params, int y)
 // image coming from Gazebo
 void LaneDetection::recvImage(const sensor_msgs::ImageConstPtr& msg)
 {
+  // Do nothing until the coordinate transform from footprint to camera is valid,
+  // because otherwise there is no point in detecting a lane!
+  if (!looked_up_camera_transform_) {
+    try {
+      listener_.lookupTransform("base_footprint", msg->header.frame_id, msg->header.stamp, camera_transform_);
+      looked_up_camera_transform_ = true; // Once the lookup is successful, there is no need to keep doing the lookup
+                                          // because the transform is constant
+    } catch (tf::TransformException& ex) {
+      ROS_WARN_THROTTLE(1.0, "%s", ex.what());
+    }
+    return;
+  }
+
   if (downsample_count < 1) {
     downsample_count++;
     return;
@@ -372,22 +386,12 @@ void LaneDetection::recvImage(const sensor_msgs::ImageConstPtr& msg)
 #endif
 
   // Project output lines from camera into vehicle frame and publish as obstacles
-  tf::StampedTransform transform;
-  try {
-    listener_.lookupTransform("base_footprint", msg->header.frame_id, msg->header.stamp, transform);
-  } catch (tf::TransformException& ex) {
-    ROS_WARN_THROTTLE(1.0, "%s", ex.what());
-    return;
-  }
 
   // Create pinhole camera model instance and load
   // its parameters from the camera info
   // generated using the checkerboard calibration program
   image_geometry::PinholeCameraModel model;
   model.fromCameraInfo(camera_info_);
-
-  // Compute the camera's line of sight vector in vehicle frame
-  tf::Vector3 cam_los_vect = transform(tf::Vector3(0, 0, 0));
 
   visualization_msgs::Marker viz_marker;
   viz_marker.header.frame_id = "base_footprint";
@@ -408,8 +412,8 @@ void LaneDetection::recvImage(const sensor_msgs::ImageConstPtr& msg)
   for (size_t i = 0; i < solid_sampled_points.size(); i++) {
     for (size_t j = 1; j < solid_sampled_points[i].size(); j++) {
       // Project pixel points into 3D points in vehicle frame
-      geometry_msgs::Point32 p1 = projectPoint(model, transform, cam_los_vect, solid_sampled_points[i][j - 1]);
-      geometry_msgs::Point32 p2 = projectPoint(model, transform, cam_los_vect, solid_sampled_points[i][j]);
+      geometry_msgs::Point32 p1 = projectPoint(model, solid_sampled_points[i][j - 1]);
+      geometry_msgs::Point32 p2 = projectPoint(model, solid_sampled_points[i][j]);
 
       // Add point to solid line point cloud for output
       solid_line_points.points.push_back(p1);
@@ -425,7 +429,7 @@ void LaneDetection::recvImage(const sensor_msgs::ImageConstPtr& msg)
       temp.z = p2.z;
       viz_marker.points.push_back(temp);
     }
-    geometry_msgs::Point32 last_point = projectPoint(model, transform, cam_los_vect, solid_sampled_points[i].back());
+    geometry_msgs::Point32 last_point = projectPoint(model, solid_sampled_points[i].back());
     solid_line_points.points.push_back(last_point);
   }
 
@@ -435,8 +439,8 @@ void LaneDetection::recvImage(const sensor_msgs::ImageConstPtr& msg)
   for (size_t i = 0; i < dashed_sampled_points.size(); i++) {
     for (size_t j = 1; j < dashed_sampled_points[i].size(); j++) {
       // Project pixel points into 3D points in vehicle frame
-      geometry_msgs::Point32 p1 = projectPoint(model, transform, cam_los_vect, dashed_sampled_points[i][j - 1]);
-      geometry_msgs::Point32 p2 = projectPoint(model, transform, cam_los_vect, dashed_sampled_points[i][j]);
+      geometry_msgs::Point32 p1 = projectPoint(model, dashed_sampled_points[i][j - 1]);
+      geometry_msgs::Point32 p2 = projectPoint(model, dashed_sampled_points[i][j]);
       dashed_line_points.points.push_back(p1);
 
       // Add points to visualize them in Rviz
@@ -450,7 +454,7 @@ void LaneDetection::recvImage(const sensor_msgs::ImageConstPtr& msg)
       temp.z = p2.z;
       viz_marker.points.push_back(temp);
     }
-    geometry_msgs::Point32 last_point = projectPoint(model, transform, cam_los_vect, dashed_sampled_points[i].back());
+    geometry_msgs::Point32 last_point = projectPoint(model, dashed_sampled_points[i].back());
     dashed_line_points.points.push_back(last_point);
   }
 
@@ -481,7 +485,7 @@ void LaneDetection::recvImage(const sensor_msgs::ImageConstPtr& msg)
   if (max_y == 0) {
     stop_line_dist_msg.data = INFINITY;
   } else {
-    geometry_msgs::Point32 stop_line_point = projectPoint(model, transform, cam_los_vect, Point(x, max_y));
+    geometry_msgs::Point32 stop_line_point = projectPoint(model, Point(x, max_y));
     stop_line_dist_msg.data = stop_line_point.x;
   }
 
@@ -492,20 +496,24 @@ void LaneDetection::recvImage(const sensor_msgs::ImageConstPtr& msg)
 }
 
 // Project 2D pixel point 'p' into vehicle's frame and return as 3D point
-geometry_msgs::Point32 LaneDetection::projectPoint(const image_geometry::PinholeCameraModel& model,
-    const tf::StampedTransform& transform,
-    const tf::Vector3& cam_los_vect,
-    const Point2d& p)
+geometry_msgs::Point32 LaneDetection::projectPoint(const image_geometry::PinholeCameraModel& model, const Point2d& p)
 {
-  Point3d p3d = model.projectPixelTo3dRay(p);
-  tf::Vector3 v1 = transform(tf::Vector3(p3d.x, p3d.y, p3d.z));
-  double d = -cam_los_vect.z() / (v1.z() - cam_los_vect.z());
-  tf::Vector3 v_robot(d * (v1.x() - cam_los_vect.x()) + cam_los_vect.x(), d * (v1.y() - cam_los_vect.y()) + cam_los_vect.y(), 0);
+  // Convert the input pixel coordinates into a 3d ray, where x and y are projected to the point where z is equal to 1.0
+  Point3d cam_frame_ray = model.projectPixelTo3dRay(p);
+  
+  // Represent camera frame ray in footprint frame
+  tf::Vector3 footprint_los_vect = camera_transform_.getBasis() * tf::Vector3(cam_frame_ray.x, cam_frame_ray.y, cam_frame_ray.z);
 
+  // Using the concept of similar triangles, scale the unit vector such that the end is on the ground plane.
+  // Then add camera position offset to obtain the final coordinates in footprint frame
+  double scale = -camera_transform_.getOrigin().z() / footprint_los_vect.z();
+  tf::Vector3 footprint_frame_coords = scale * footprint_los_vect + camera_transform_.getOrigin();
+
+  // Fill output point with the result of the projection
   geometry_msgs::Point32 point;
-  point.x = v_robot.x();
-  point.y = v_robot.y();
-  point.z = v_robot.z();
+  point.x = footprint_frame_coords.x();
+  point.y = footprint_frame_coords.y();
+  point.z = footprint_frame_coords.z();
   return point;
 }
 
