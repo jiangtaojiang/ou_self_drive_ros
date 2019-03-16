@@ -11,7 +11,8 @@ int main(int argc, char** argv)
 
   // Instantiate node class
   yolo::YOLONode node(n, pn); 
-
+  
   // Spin and process callbacks
   ros::spin();
+  ros::waitForShutdown();
 }
