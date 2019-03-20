@@ -11,7 +11,14 @@ int main(int argc, char** argv)
   
   // Instantiate node class
   path_planning::PathPlanning node(n, pn);
+
+  ros::Rate loop_rate(10);
   
   // Spin and process callbacks
-  ros::spin();
+  while(true)
+  {
+    node.run();
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
 }
