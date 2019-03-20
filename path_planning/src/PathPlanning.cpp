@@ -10,7 +10,16 @@ namespace path_planning {
   {
     vehicle_control_publisher = n.advertise<geometry_msgs::Twist>("cmd_vel", 1);
     ResetVehicleControlMsg();
+
+    // Initialize a timer and bind its trigger callback to the 'timerCallback' method
+    timer_ = n.createTimer(ros::Duration(0.1), &PathPlanning::timerCallback, this);
     
+  }
+  void PathPlanning::timerCallback(const ros::TimerEvent& event)
+  {
+    // Code here will execute every time the timer triggers.
+    // The 'event' argument contains some useful timestamps that can be used
+    //    in some useful situations, particularly populating timestamps in ROS messages
   }
   void PathPlanning::run()
   {
