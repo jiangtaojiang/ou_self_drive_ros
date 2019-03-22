@@ -28,7 +28,6 @@ public:
     void SetDetectionThreshold(const float& set) {mDetectionThreshold = set;}
     void SetNMSThreshold(const float& set) {mNonMaxSuppressThreshold = set;}
     void DrawDetections(const bool& set) {mDrawDetections = set;}
-    
     IplImage* GetDetectedImage(){return detected_ipl;}
 
     //This function is blocking and will take considerable time (relatively speaking)

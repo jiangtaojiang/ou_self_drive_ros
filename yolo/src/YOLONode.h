@@ -5,6 +5,7 @@
 #include <ros/ros.h>
 #include <string>
 #include <sensor_msgs/Image.h>
+//#include <tf2_ros/transform_listener.h>
 
 class YOLO;
 // Namespace matches ROS package name
@@ -21,14 +22,16 @@ namespace yolo {
   private:
 	// Node-specific stuff here
         bool InitializeYOLO();
-		void ImageTopicCallback(const sensor_msgs::Image&);
+		void ImageTopicCallback(const sensor_msgs::ImageConstPtr& msg);
         YOLO* mYOLO;
 
 		ros::Publisher status_publisher;
 		ros::Subscriber image_subscriber;
-        ros::Publisher detection_image_publisher;
+        ros::Publisher detections_publisher;
+        //tf2_ros::TransformListener tf_listener;
+        //tf2_ros::Buffer tf_buffer;
+        
         bool mError;
-
   };
 
 

@@ -3,7 +3,9 @@
 
 #include <unistd.h>
 #include <std_msgs/String.h>
+#include <yolo/Detections.h>
 #include <cv_bridge/cv_bridge.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <sstream>
 
 #include "YOLO.h"
@@ -12,42 +14,36 @@
 #define CONFIG_NAME "run.cfg"
 #define IMAGE_TOPIC "/camera_front/image_raw"
 
+const static float CAMERA_HORIZ_FOV = 1.04;
+const static float HORIZ_OFFSET = CAMERA_HORIZ_FOV / 2;
+const static float CAMERA_VERT_FOV = 0.78; //horiz FOV * height / width; 1.04 * 480/640
+const static float VERT_OFFSET = CAMERA_VERT_FOV / 2;
+
 // Namespace matches ROS package name
 namespace yolo {
 
     // Constructor with global and private node handle arguments
-    YOLONode::YOLONode(ros::NodeHandle& n, ros::NodeHandle& pn)
+    YOLONode::YOLONode(ros::NodeHandle& n, ros::NodeHandle& pn) //: tf_listener(tf_buffer)
     {
 		status_publisher = n.advertise<std_msgs::String>("status", 1);		
-        detection_image_publisher = n.advertise<sensor_msgs::Image>("yolo/detections", 1);
+        detections_publisher = n.advertise<yolo::Detections>("yolo/detections", 1);
 		std_msgs::String message; 
 		message.data = "Starting up...";
 		status_publisher.publish(message);
         mError = false;
        
 		if(InitializeYOLO())
-		{
-			printf("\nWinning!!!\n");
-			sleep(1);			
+		{			
 			message.data = "YOLO successfully initialized";
 		}
 		else
-		{
-			printf("\nWell shit...\n");
-			sleep(1);			
+		{		
 			message.data = "YOLO failed to initialize";
 		}
-		printf("\nPlease don't crash!!!\n");
-			sleep(1);
 		status_publisher.publish(message);
-		printf("\nPlease don't crash!!!\n");
-			sleep(1);
-		try{
-			image_subscriber = n.subscribe("/camera_front/image_raw", 1, &YOLONode::ImageTopicCallback, this);
-		}catch(...)
-		{
-			printf("\nShit's broke my friend...\n");
-		}
+		
+		image_subscriber = n.subscribe("/camera_front/image_raw", 1, &YOLONode::ImageTopicCallback, this);
+		
     }
     YOLONode::~YOLONode()
     {
@@ -57,7 +53,7 @@ namespace yolo {
     bool YOLONode::InitializeYOLO()
     {
 		printf("\nYOLOOOOO!!!\n");
-		sleep(1);        
+		      
 		mYOLO = new YOLO();
         
         char buff[512];
@@ -80,9 +76,9 @@ namespace yolo {
         config_path += CONFIG_NAME;
         mYOLO->SetConfigurationPath(config_path);
 
-        mYOLO->SetDetectionThreshold(0.2);
+        mYOLO->SetDetectionThreshold(0.4);
         mYOLO->SetNMSThreshold(0.1);
-        mYOLO->DrawDetections(true);
+        mYOLO->DrawDetections(false);
 
         if(!mYOLO->Initialize())
         {
@@ -96,30 +92,18 @@ namespace yolo {
         return true;
     }
 
-	void YOLONode::ImageTopicCallback(const sensor_msgs::Image& image_msg)
+	void YOLONode::ImageTopicCallback(const sensor_msgs::ImageConstPtr& image_msg)
 	{   
-        //we are just going to throw away images that come in while the network is running.
-        //perhaps it would be better to buffer 1 image so that the network could always be 
-        //running but.. eh.. that's future John's problem.
-        if(mYOLO->IsRunning())
-        {
-            printf("Yolo Running, frame discarded\n");
-            return;
-        }
-        else if(mError)
+        if(mError)
         {
             printf("Error Detected, frame discarded\n");
             return;  
         }
-        
-            
-        
-        
+       
         cv_bridge::CvImagePtr cv_image;
         try 
         {
             cv_image = cv_bridge::toCvCopy(image_msg, "rgb8");
-            printf("copied\n");
         } 
         catch (cv_bridge::Exception& e) 
         {
@@ -128,38 +112,33 @@ namespace yolo {
         }
 
         IplImage* ipl_image = new IplImage(cv_image->image);
-        try{
-            printf("before detect\n");
-            std::vector<Detection_t> detections = mYOLO->Detect(ipl_image);
-            if(detections.size() > 0)
-            {
-                std::stringstream ss;
-                ss << "Detection:\n";
-                ss << "class\t\t" << detections[0].class_id;
-                ss << "confidence\t\t" << detections[0].confidence;
 
-                std_msgs::String message; 
-                message.data = ss.str();
-                status_publisher.publish(message);
-            }
-            else
-            {
-                std_msgs::String message; 
-                message.data = "No Detections";
-                status_publisher.publish(message);           
-            }
+        /*geometry_msgs::TransformStamped transform;
+        try{
+            tf_buffer.lookupTransform("front_camera", "base_footprint", ros::Time(0));
         }
-        catch(...)
+        catch (tf2::TransformException &ex) {
+            ROS_WARN("%s",ex.what());
+            ros::Duration(1.0).sleep();
+            return;
+        }*/
+        
+        std::vector<Detection_t> detections = mYOLO->Detect(ipl_image);
+        yolo::Detections detections_msg;
+        yolo::Detection detection;
+        for(int i = 0; i < detections.size(); i++)
         {
-            mError = true;
-            std_msgs::String message; 
-            message.data = mYOLO->mLastError.c_str();
-            while(true)
-            {           
-                status_publisher.publish(message);
-                sleep(1000);  
-            } 
+            
+            detection.class_id = detections[i].class_id;
+            detection.angle_left = (detections[i].x * CAMERA_HORIZ_FOV) - HORIZ_OFFSET;
+            detection.angle_right = detection.angle_left + (detections[i].w * CAMERA_HORIZ_FOV);
+            detection.angle_top = (detections[i].y * CAMERA_VERT_FOV) - VERT_OFFSET;
+            detection.angle_bottom = detection.angle_top + (detections[i].h * CAMERA_VERT_FOV);
+            detection.confidence = detections[i].confidence;  
+            detections_msg.detections.push_back(detection);
         }
+                
+        detections_publisher.publish(detections_msg);
         
         
         delete ipl_image;

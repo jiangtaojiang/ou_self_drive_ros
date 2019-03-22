@@ -8,11 +8,25 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   cv_bridge
   xmlrpcpp
+  message_generation
+)
+
+add_message_files(
+  FILES 
+  Detection.msg
+  Detections.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
 )
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread")
 
-catkin_package()
+catkin_package(
+	CATKIN_DEPENDS message_runtime
+)
 
 include_directories(
 	${catkin_INCLUDE_DIRS}

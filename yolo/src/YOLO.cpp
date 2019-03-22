@@ -110,9 +110,9 @@ std::vector<Detection_t> YOLO::Detect(IplImage* ipl_img)
     layer output_layer = mNetwork->layers[mNetwork->n-1];
     int size = output_layer.side * output_layer.side * output_layer.n;
     do_nms_sort(dets, num_detections, 80, mNonMaxSuppressThreshold);
-    printf("classes: %d\n", output_layer.classes);
+    //printf("classes: %d\n", output_layer.classes);
 
-    printf("num detections:%i\n", num_detections);
+    //printf("num detections:%i\n", num_detections);
     Detection_t temp;
     for(int i = 0; i < num_detections; i++)
     {
@@ -129,13 +129,13 @@ std::vector<Detection_t> YOLO::Detect(IplImage* ipl_img)
         }
         if(max_prob < mDetectionThreshold)
             continue;
-        temp.class_id = det.sort_class;
-        temp.confidence = *det.prob;
+        temp.class_id = classification;
+        temp.confidence = max_prob;
         temp.x = det.bbox.x;
         temp.y = det.bbox.y;
         temp.w = det.bbox.w;
         temp.h = det.bbox.h;
-        printf("probability: %f\t\tclass: %d\t\tx: %f\ty: %f\n", max_prob, classification, det.bbox.x, det.bbox.y);
+        //printf("probability: %f\t\tclass: %d\t\tx: %f\ty: %f\\tw: %f\th: %fn", max_prob, classification, det.bbox.x, det.bbox.y, det.bbox.w, det.bbox.h);
         ret.push_back(temp);
     }
     if(mDrawDetections)
