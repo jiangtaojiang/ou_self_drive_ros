@@ -6,6 +6,7 @@ import operator
 import time
 import queue
 import multiprocessing
+import rospy
 
 import RADARDetection
 from RADARMessageProcessor import receiveAndPackAndSendRadarData

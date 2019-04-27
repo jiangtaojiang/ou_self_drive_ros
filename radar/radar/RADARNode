@@ -1,0 +1,93 @@
+#!/usr/bin/env python
+
+import socket
+import math
+import operator
+import time
+import queue
+import multiprocessing
+
+import rospy
+from radar.msg import radar_detections as DetectionsMsg
+from radar.msg import radar_detection as DetectionMsg
+
+import RADARDetection
+from RADARMessageProcessor import receiveAndPackAndSendRadarData
+from multiprocessing import Process, Queue
+from socket import AF_PACKET, SOCK_RAW
+
+maximum_distance = 1000  # meters
+
+PC_IP = "192.168.2.141"
+RADAR_NAMES = ["Front_Left", "Front_Center", "Front_Right", "Rear_Left", "Rear_Center", "Rear_Right"]
+RADAR_DESTINATION_PORTS = [31122]#, 31122, 31122, 31122, 31122, 31122, 31122]
+RADAR_DESTINATION_IPS = ["225.0.0.1"]#, "226.0.0.1", "227.0.0.1", "228.0.0.1", "229.0.0.1", "230.0.0.1", "231.0.0.1"]
+num_processes = range(len(RADAR_DESTINATION_PORTS))
+
+socks = []
+processes = []
+short_range_queues = []
+publishers = []
+
+
+def radar_message_processor_loop():
+	rospy.init_node('radar')
+
+	for i in range(len(RADAR_DESTINATION_PORTS)):
+		#ros stuff
+		publishers.append(rospy.Publisher("RADAR_raw/" + RADAR_NAMES[i], DetectionsMsg, queue_size=1))
+
+		#radar processing stuff
+		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+		sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
+		sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 1)
+		sock.bind((RADAR_DESTINATION_IPS[i], RADAR_DESTINATION_PORTS[i]))
+		sock.setsockopt(socket.SOL_IP, socket.IP_MULTICAST_IF, socket.inet_aton(PC_IP))
+		sock.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(RADAR_DESTINATION_IPS[i]) + socket.inet_aton(PC_IP))
+		socks.append(sock)
+		short_range_queues.append(Queue())
+		processes.append(Process(target=receiveAndPackAndSendRadarData, args=(socks[-1], i, short_range_queues[i])))
+		processes[-1].start()
+
+
+	while not rospy.is_shutdown():
+
+		for i in range(len(RADAR_DESTINATION_PORTS)):
+			#main processing
+			detections_list = []
+			num_detections = 0
+			for detection in short_range_queues[i].get(True):
+				if detection.r > maximum_distance:
+					continue;
+				detection_msg = DetectionMsg()
+				detection_msg.angle_theta = detection.theta
+				detection_msg.angle_elevation = detection.phi
+				detection_msg.r = detection.r
+				detection_msg.rcs = detection.rcs
+				detection_msg.pdh = detection.pdh
+				detection_msg.snr = detection.snr
+				detection_msg.vrel = detection.vrel
+
+				detections_list.append(detection_msg)
+				num_detections = num_detections + 1
+
+			detections_msg = DetectionsMsg()
+			detections_msg.detections = detections_list
+			detections_msg.radar_id = i
+			detections_msg.num_detections = num_detections
+			detections_msg.radar_name = RADAR_NAMES[i]
+
+			publishers[i].publish(detections_msg)
+		
+
+	for i in range(len(RADAR_DESTINATION_PORTS)):
+		processes[i].join()
+
+
+if __name__ == '__main__':
+	try:
+		radar_message_processor_loop()
+	except rospy.ROSInterruptException:
+		pass
+		
