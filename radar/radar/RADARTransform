@@ -23,13 +23,18 @@ def radar_detections_cb(data):
 	point_list = []
 	color_list = []
 	
-	#for i in range(0, data.num_detections):
-	x = 2
-	y = 2
-	z = 2
-	point_list.append(Point(x,y,z))
-	color_list.append(ColorRGBA(1.0, 1.0, 1.0, 0.5))
-	#end for loop
+	for i in range(0, data.num_detections):
+		x = math.sin(data.detections[i].angle_theta) * (data.detections[i].r)
+		y = math.cos(data.detections[i].angle_theta) * (data.detections[i].r)
+		z = .5
+		point_list.append(Point(x,y,z))
+		vrel = data.detections[i].vrel
+		if vrel > 1:
+			vrel = 1
+		elif vrel < 0:
+			vrel = vrel * -1
+		color_list.append(ColorRGBA(1.0, 1 - vrel, 1-  vrel, 0.75))
+
 
 	markers[id].points = point_list
 	markers[id].colors = color_list
