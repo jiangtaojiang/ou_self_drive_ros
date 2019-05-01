@@ -38,18 +38,19 @@ add_executable(YOLONode
 	src/yolo_node.cpp
 	src/YOLO.cpp
 )
-add_dependencies(YOLONode ${PROJECT_NAME}_gencpp)
+
 target_link_libraries(YOLONode
 	${catkin_LIBRARIES}
 	m
     pthread
     stdc++
 	cudart
-    cuda
+    cuda    
     cublas
 	curand
 )
 
+#change this to your darknet path!!!
 target_link_libraries(YOLONode
 	${CMAKE_CURRENT_SOURCE_DIR}/darknet/libdarknet.so
 )

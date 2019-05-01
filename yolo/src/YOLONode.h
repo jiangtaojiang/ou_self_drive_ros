@@ -28,6 +28,7 @@ namespace yolo {
 		ros::Publisher status_publisher;
 		ros::Subscriber image_subscriber;
         ros::Publisher detections_publisher;
+        ros::Publisher detected_image_publisher;
         //tf2_ros::TransformListener tf_listener;
         //tf2_ros::Buffer tf_buffer;
         
