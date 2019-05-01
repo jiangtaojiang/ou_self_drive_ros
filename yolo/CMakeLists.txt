@@ -39,6 +39,8 @@ add_executable(YOLONode
 	src/YOLO.cpp
 )
 
+add_dependencies(YOLONode ${PROJECT_NAME}_gencpp)
+
 target_link_libraries(YOLONode
 	${catkin_LIBRARIES}
 	m
