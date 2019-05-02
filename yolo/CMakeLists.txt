@@ -52,7 +52,6 @@ target_link_libraries(YOLONode
 	curand
 )
 
-#change this to your darknet path!!!
 target_link_libraries(YOLONode
 	${CMAKE_CURRENT_SOURCE_DIR}/darknet/libdarknet.so
 )
