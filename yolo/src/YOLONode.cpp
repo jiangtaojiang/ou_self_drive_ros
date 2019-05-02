@@ -14,10 +14,14 @@
 #define CONFIG_NAME "run.cfg"
 #define IMAGE_TOPIC "/camera_front/image_raw"
 
+#define DEBUG
+
 const static float CAMERA_HORIZ_FOV = 1.04;
 const static float HORIZ_OFFSET = CAMERA_HORIZ_FOV / 2;
 const static float CAMERA_VERT_FOV = 0.78; //horiz FOV * height / width; 1.04 * 480/640
 const static float VERT_OFFSET = CAMERA_VERT_FOV / 2;
+
+
 
 // Namespace matches ROS package name
 namespace yolo {
@@ -27,6 +31,7 @@ namespace yolo {
     {
 		status_publisher = n.advertise<std_msgs::String>("status", 1);		
         detections_publisher = n.advertise<yolo::Detections>("yolo/detections", 1);
+        detected_image_publisher = n.advertise<sensor_msgs::Image>("yolo/detected_image", 1);
 		std_msgs::String message; 
 		message.data = "Starting up...";
 		status_publisher.publish(message);
@@ -76,9 +81,14 @@ namespace yolo {
         config_path += CONFIG_NAME;
         mYOLO->SetConfigurationPath(config_path);
 
-        mYOLO->SetDetectionThreshold(0.4);
+        mYOLO->SetDetectionThreshold(0.65);
         mYOLO->SetNMSThreshold(0.1);
+
+#ifdef DEBUG
+        mYOLO->DrawDetections(true);
+#elif
         mYOLO->DrawDetections(false);
+#endif
 
         if(!mYOLO->Initialize())
         {
@@ -139,7 +149,14 @@ namespace yolo {
         }
                 
         detections_publisher.publish(detections_msg);
-        
+
+#ifdef DEBUG
+        cv_bridge::CvImage cv_detected_image;
+        IplImage* ipl_detected_image = mYOLO->GetDetectedImage();
+        cv::Mat mat_detected_image = cv::cvarrToMat(ipl_detected_image);
+        sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", mat_detected_image).toImageMsg();
+        detected_image_publisher.publish(msg);
+#endif
         
         delete ipl_image;
     }

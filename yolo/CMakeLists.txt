@@ -38,14 +38,16 @@ add_executable(YOLONode
 	src/yolo_node.cpp
 	src/YOLO.cpp
 )
+
 add_dependencies(YOLONode ${PROJECT_NAME}_gencpp)
+
 target_link_libraries(YOLONode
 	${catkin_LIBRARIES}
 	m
     pthread
     stdc++
 	cudart
-    cuda
+    cuda    
     cublas
 	curand
 )
