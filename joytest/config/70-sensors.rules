@@ -1,0 +1,5 @@
+SUBSYSTEMS=="usb", KERNEL=="ttyACM*", ACTION=="add", ATTRS{serial}=="5563931333335181B061", MODE="666", SYMLINK+="gem2/accbrake", GROUP="dialout"
+SUBSYSTEMS=="usb", KERNEL=="ttyACM*", ACTION=="add", ATTRS{serial}=="755333538373518071C0", MODE="666", SYMLINK+="gem2/speedsens", GROUP="dialout"
+SUBSYSTEMS=="usb", KERNEL=="ttyUSB*", ACTION=="add", ATTRS{serial}=="DA01LD02", MODE="666", SYMLINK+="gem2/steering", GROUP="dialout"
+SUBSYSTEMS=="usb", KERNEL=="ttyACM*", ACTION=="add", ATTRS{serial}=="85734323431351800141", MODE="666", SYMLINK+="gem2/gearandlamp", GROUP="dialout"
+
