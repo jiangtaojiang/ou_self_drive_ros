@@ -9,6 +9,8 @@
 // Feedback and outputs
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/Int16.h>
+
 
 // Dynamic reconfigure
 #include <dynamic_reconfigure/server.h>

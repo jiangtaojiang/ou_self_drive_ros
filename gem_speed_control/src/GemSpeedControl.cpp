@@ -6,8 +6,8 @@ GemSpeedControl::GemSpeedControl(ros::NodeHandle n, ros::NodeHandle pn)
 {
   sub_cmd = n.subscribe("cmd_vel", 1, &GemSpeedControl::recvCmd, this);
   sub_feedback = n.subscribe("c_speed", 1, &GemSpeedControl::recvFeedback, this);
-  pub_brake = n.advertise<std_msgs::Float64>("brake_cmd", 1);
-  pub_throttle = n.advertise<std_msgs::Float64>("throttle_cmd", 1);
+  pub_brake = n.advertise<std_msgs::Int16>("brake_cmd", 1);
+  pub_throttle = n.advertise<std_msgs::Int16>("throttle_cmd", 1);
   
   cmd_speed = 0.0;
   error_int = 0.0;

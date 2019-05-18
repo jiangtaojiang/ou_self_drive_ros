@@ -23,7 +23,9 @@ rosrun rosserial_python serial_node.py /dev/ttyUSB0
    </node>
   <node pkg="joytest" name="joytest2" type="joy_test3.py" />
 
-  <node pkg="joytest" name="topictransfer2" type="topic_transfer2.py" />
 
-
+  <node pkg="gem_speed_control" name="gem_speed_control" type="gem_speed_control" >
+  <remap from = "brake_cmd" to = "brake"/>
+  <remap from = "throttle_cmd" to = "acc"/>
+  </node>
 </launch>
