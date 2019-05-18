@@ -18,11 +18,6 @@ rosrun rosserial_python serial_node.py /dev/ttyUSB0
   <param name="port" value="/dev/gem2/gearandlamp" />
   </node>
 
-   <node pkg="joy" name="joy" type="joy_node">
-   <param name="autorepeat_rate" value="5"/>
-   </node>
-  <node pkg="joytest" name="joytest2" type="joy_test3.py" />
-
 
   <node pkg="gem_speed_control" name="gem_speed_control" type="gem_speed_control" >
   <remap from = "brake_cmd" to = "brake"/>
