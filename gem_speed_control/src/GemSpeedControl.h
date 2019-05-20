@@ -33,9 +33,10 @@ private:
   ros::Subscriber sub_feedback;
   ros::Publisher pub_throttle;
   ros::Publisher pub_brake;
+  ros::Publisher pub_steer;
   dynamic_reconfigure::Server<SpeedControlConfig> srv;
   SpeedControlConfig cfg;
-  
+  float cmd_steer;
   float cmd_speed;
   float error_int;
 

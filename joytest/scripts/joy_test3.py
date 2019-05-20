@@ -24,7 +24,7 @@ class JoyTwist(object):
             joyrev = joy_msg.buttons[0]
             joyfor = joy_msg.buttons[3]
             if joyacc >= 0:
-                acc.data = joyacc * 35.0 + 180.0
+                acc.data = joyacc * 39.0 + 180.0
                 self._acc_pub.publish(acc)
             else:
                 if joyacc < -0.8:
