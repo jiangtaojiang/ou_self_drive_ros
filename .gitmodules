@@ -1,0 +1,3 @@
+[submodule "cepton_ros"]
+	path = cepton_ros
+	url = https://github.com/dataspeedinc/cepton_ros
