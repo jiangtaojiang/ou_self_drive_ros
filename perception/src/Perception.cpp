@@ -1,8 +1,6 @@
 // Header file for the class
 #include "Perception.h"
-#include "PointMap.hpp"
 #include <string>
-#include "pcl_ros/point_cloud.h"
 #include "visualization_msgs/Marker.h"
 
 

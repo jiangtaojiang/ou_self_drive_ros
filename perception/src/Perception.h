@@ -4,6 +4,8 @@
 // ROS header
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
+#include "PointMap.hpp"
+#include "pcl_ros/point_cloud.h"
 
 // Namespace matches ROS package name
 namespace perception {

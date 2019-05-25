@@ -4,6 +4,8 @@ project(perception)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rosmsg
+  pcl_ros
+
 )
 
 catkin_package()
