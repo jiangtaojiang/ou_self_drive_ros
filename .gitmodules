@@ -2,3 +2,6 @@
 	path = cepton_ros
 	url = https://github.com/dataspeedinc/cepton_ros
 
+[submodule "swiftnav_ros"]
+	path = swiftnav_ros
+	url = https://github.com/oaklandsmartvehicles/swiftnav_ros
