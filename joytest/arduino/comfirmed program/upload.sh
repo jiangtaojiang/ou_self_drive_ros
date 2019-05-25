@@ -1,8 +1,8 @@
-cd accelerate_control6
-arduino --board arduino:avr:mega:cpu=atmega2560 --port /dev/gem2/accbrake --upload accelerate_control6.ino 
+cd accelerate_control7
+arduino --board arduino:avr:mega:cpu=atmega2560 --port /dev/gem2/accbrake --upload accelerate_control7.ino 
 
-cd ../speed_measure2
-arduino --board arduino:avr:uno --port /dev/gem2/speedsens --upload speed_measure2.ino
+cd ../speed_measure7
+arduino --board arduino:avr:uno --port /dev/gem2/speedsens --upload speed_measure7.ino
 
 cd ../Steering_motor_with_Estop7
 arduino --board arduino:avr:uno --port /dev/gem2/steering --upload Steering_motor_with_Estop7.ino 

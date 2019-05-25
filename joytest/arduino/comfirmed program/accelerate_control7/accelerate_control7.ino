@@ -62,8 +62,8 @@
   c_estop<- Bool
 */
 
-//#define DEBUG 
-
+//#define DEBUG
+#include <Servo.h>
 #include <ros.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Int16.h>
@@ -105,6 +105,7 @@ int brake_lamp = 8;
 int rear_brake = 10;
 int acc = 0;
 int brake = 0;
+Servo myservo;
 unsigned long duration_time = 100;
 
 bool blamp = false;
@@ -145,24 +146,32 @@ void brakeCb(const std_msgs::Int16 &Brake)
 // blamp = brake_on(255) rear brake
 // blamp = brake_on(0) off
 void acc_on(int acc1) {
-  if (acc1 == 0) {
+  digitalWrite(acc_signal_relay, HIGH); // trun on relay2
+  digitalWrite(acc_switch_relay, HIGH); // trun on relay1
+  analogWrite(acc_switch_PWM, 0); // move
+  analogWrite(acc_signal_PWM, acc1);
+}
+bool brake_on(int brake1) {
+  if (brake1 > 0) {
     digitalWrite(acc_signal_relay, LOW); // trun on relay2
     digitalWrite(acc_switch_relay, LOW); // trun on relay1
     analogWrite(acc_switch_PWM, 255); // stop
     analogWrite(acc_signal_PWM, 0);
-  } else {
-    digitalWrite(acc_signal_relay, HIGH); // trun on relay2
-    digitalWrite(acc_switch_relay, HIGH); // trun on relay1
-    analogWrite(acc_switch_PWM, 0); // move
-    acc1--;
-    analogWrite(acc_signal_PWM, acc1);
   }
-}
-bool brake_on(int brake1) {
   if (brake1 == 255) {
     analogWrite(brake_signal_PWM, 0);
+    myservo.writeMicroseconds (1600);   ////pull
+    //   delay(200);
+    myservo.writeMicroseconds (1950);
+    //   delay(200);
+    myservo.writeMicroseconds (1600);
   } else {
     analogWrite(brake_signal_PWM, brake1);
+    myservo.writeMicroseconds (1950);
+    //   delay(200);
+    myservo.writeMicroseconds (1600);
+    //   delay(200);
+    myservo.writeMicroseconds (1950);
     if (brake1 == 0) {
       digitalWrite(brake_lamp, false);
       return false;
@@ -190,7 +199,13 @@ void setup()
   pinMode(brake_lamp, OUTPUT);
   analogWrite(brake_signal_PWM, 0);
   digitalWrite(brake_lamp, LOW);
-  c_millis = millis()+1;
+  myservo.attach(13);
+  myservo.writeMicroseconds (1950);
+  //  delay(200);
+  myservo.writeMicroseconds (1600);
+  //  delay(200);
+  myservo.writeMicroseconds (1950);   //released
+  c_millis = millis() + 1;
   publishtime = c_millis + 50;
   duration_time = c_millis;
   nh.initNode();
@@ -215,8 +230,8 @@ void setup()
     mode = -1;
   } else {
     mode = 0;
-    brake = 0;blamp = brake_on(brake);
-    acc = 0;acc_on(acc);
+    brake = 0; blamp = brake_on(brake);
+    acc = 0; acc_on(acc);
   }
 }
 // acc_on(1-255) acc and relay is on
@@ -229,29 +244,29 @@ void setup()
 void loop() {
   c_millis = millis();
   estop_flag = digitalRead(estop);
-  if(estop_flag_pre == false && estop_flag == true) {
+  if (estop_flag_pre == false && estop_flag == true) {
     duration_time = c_millis + 1000;
   }
-  if(estop_flag == true) {
+  if (estop_flag == true) {
     brake_topic = false;
     acc_topic = false;
     mode = -1;
-    acc = 0;brake = 100;
+    acc = 0; brake = 100;
   }
   if (estop_flag_pre == true && estop_flag == false) {
-    brake = 0;blamp = brake_on(brake);
-    acc = 0;acc_on(acc);
-    acc_topic = false;brake_topic = false;
+    brake = 0; blamp = brake_on(brake);
+    acc = 0; acc_on(acc);
+    acc_topic = false; brake_topic = false;
     mode = 0;
   }
   if (brake_topic == true) {
-    mode = -1;acc = 0;
+    mode = -1; acc = 0;
     duration_time = c_millis + 1000;
     acc_topic = false;
     brake_topic = false;
   }
   if (acc_topic == true) {
-    mode = 1;brake = 0;
+    mode = 1; brake = 0;
     duration_time = c_millis + 1000;
     acc_topic = false;
     brake_topic = false;

@@ -23,6 +23,9 @@ rosrun rosserial_python serial_node.py /dev/ttyUSB0
    </node>
   <node pkg="joytest" name="joytest3" type="joy_test3.py" />
 
+  <node pkg="rosbag" type="record" name="rosbag_record"
+       args="record -j -O test.bag />
+
 <!--
   <node pkg="gem_speed_control" name="gem_speed_control" type="gem_speed_control" >
   <remap from = "brake_cmd" to = "brake"/>

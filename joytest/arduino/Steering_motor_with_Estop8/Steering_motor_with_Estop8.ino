@@ -34,7 +34,7 @@ ros::NodeHandle nh;
 std_msgs::Float32 c_steering;
 ros::Publisher pub("c_steering", &c_steering);
 
-#define USEPOTENTIOMETER 1           /// 0 not use potentionmeter/// 1 use potentiometer
+#define USEPOTENTIOMETER 0           /// 0 not use potentionmeter/// 1 use potentiometer
 
 int CP_plus = 9;
 int CW_plus = 8;
@@ -53,7 +53,7 @@ void steeringCb(const std_msgs::Float32 &steering)
 #if !(USEPOTENTIOMETER)
   diff_steering = steering_target - c_steering.data;
 #else
-  c_steering.data = 20./159.*(analogRead(steer_angle))-4930./159.;
+  c_steering.data = -(analogRead(steer_angle) - 512.0) / 512.0 * 40;
   diff_steering = steering_target - c_steering.data;
 #endif
   int pulse = (int)diff_steering * (400. / 360.) * (360. / (37.5 / 4)) ; ///wheel angle need calculate
@@ -111,7 +111,7 @@ void loop() {
     if(delaytime < 1) delaytime = 1;
     steering_count--;
 #if(USEPOTENTIOMETER)
-    c_steering.data = 20./159.*(analogRead(steer_angle))-4930./159.;
+    c_steering.data = -(analogRead(steer_angle) - 512.0) / 512.0 * 40;
 #else
     c_steering.data += (steering_dir / ((400. / 360.) * (360. / (37.5 / 4))));
 #endif

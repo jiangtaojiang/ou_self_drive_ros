@@ -11,7 +11,8 @@ GemSpeedControl::GemSpeedControl(ros::NodeHandle n, ros::NodeHandle pn)
   pub_steer = n.advertise<std_msgs::Float32>("steering_cmd", 1);
   cmd_steer = 0.0;
   cmd_speed = 0.0;
-  error_int = 0.0; 
+  error_int = 0.0;
+  
   srv.setCallback(boost::bind(&GemSpeedControl::reconfig, this, _1, _2));
 }
 
@@ -45,15 +46,15 @@ void GemSpeedControl::recvFeedback(const std_msgs::Float32ConstPtr& msg)
   }
   
   std_msgs::Int16 acc; // m/sec   1mile/hr->1/2.237 m/s
+//  acc.data = (int)(180+32*throttle_pct);
   acc.data = (int)(180 + 32.0 * throttle_pct);
   pub_throttle.publish(acc);
   
-//  if(brakes) {
-//    std_msgs::Int16 brake;
-//    brake.data = 0;
-//    brake.data = 100;
-//    pub_brake.publish(brake);
-//  }
+ // std_msgs::Int16 brake;
+ // brake.data = 0;
+ // if(brakes) brake.data = 100;
+ // pub_brake.publish(brake);
+  
   std_msgs::Float32 steer;// rad/sec
   steer.data = (float)cmd_steer * 180.0 / 3.141592 / cfg.sample_time;
   pub_steer.publish(steer);
