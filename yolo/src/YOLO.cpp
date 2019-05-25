@@ -1,6 +1,7 @@
 #include "YOLO.h"
 #define OPENCV
 #include "../darknet/darknet.h"
+#define NUM_CLASSES 7
 image **alphabet;
 char *coco_names[] = {"person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow"};
 
@@ -109,7 +110,7 @@ std::vector<Detection_t> YOLO::Detect(IplImage* ipl_img)
     //Non max suppression suppress duplicate detections.
     layer output_layer = mNetwork->layers[mNetwork->n-1];
     int size = output_layer.side * output_layer.side * output_layer.n;
-    do_nms_sort(dets, num_detections, 80, mNonMaxSuppressThreshold);
+    do_nms_sort(dets, num_detections, NUM_CLASSES, mNonMaxSuppressThreshold);
     //printf("classes: %d\n", output_layer.classes);
 
     //printf("num detections:%i\n", num_detections);
