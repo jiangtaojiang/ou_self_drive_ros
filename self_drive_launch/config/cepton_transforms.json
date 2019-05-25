@@ -1,0 +1,8 @@
+{
+    "8546": {
+        "frame_id": "cepton_center",
+        "topic_name": "center",
+        "rotation": [0, 0, 0],
+        "translation": [0, 0, 0]
+    }
+}
