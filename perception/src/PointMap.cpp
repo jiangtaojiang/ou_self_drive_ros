@@ -1,14 +1,12 @@
 #include "PointMap.hpp"
+#include <cmath>
 
 
 PointMap::PointMap()
 {
-    x_num_cells = 100;
-    y_num_cells = 100;
     x_size = 100;
     y_size = 100;
-    x_cell_size = x_size / x_num_cells;
-    y_cell_size = y_size / y_num_cells;
+    SetNumCells(150, 150);
     update_counter = 0;
 }
 /*!
@@ -49,6 +47,28 @@ void PointMap::SetNumCells(const size_t& x_cells, const size_t& y_cells)
 
     x_num_cells = x_cells;
     y_num_cells = y_cells;
+
+    x_cell_size = x_size / (double)x_num_cells;
+    y_cell_size = y_size / (double)y_num_cells;
+
+    UpdateCellDimensions();
+}
+
+/*!
+Sets the number of cells in the 2D Grid.
+@param x size of the map in the x direction edge to edge.
+@param y size of the map in the y direction edge to edge.
+*/
+void PointMap::SetSize(const double& x, const double& y)
+{
+
+    x_size = x;
+    x_size = y;
+
+    x_cell_size = x_size / (double)x_num_cells;
+    y_cell_size = y_size / (double)y_num_cells;
+
+    UpdateCellDimensions();
 }
 
 /*!
@@ -65,18 +85,20 @@ int PointMap::AddLIDARPoints(const std::vector<Point>& points)
     update_counter++;
 
     int x_index, y_index;
-    float x_min = -50;
-    float y_min = -50;
+    double x_min = x_size * -0.5;
+    double y_min = y_size * -0.5;
     std::map< std::pair< int, int>, std::vector<Point> > map_update;
     
     for(auto point : points)
     {
         int x, y;
-        x = (point.x - x_min) / x_cell_size;
-        y = (point.y - y_min) / y_cell_size;
+        
+        x = int((point.x - x_min) / x_cell_size);
+        y = int((point.y - y_min) / y_cell_size);
+
         if( x < 0 || x >= x_num_cells || 
             y < 0 || y >= y_num_cells ||
-            point.z > 1.5)
+            point.z >= z_cut_off)
             continue;
 
         map_update[std::pair< int, int>(x,y)].push_back(point);
@@ -109,4 +131,55 @@ Clears the entire point map of points.
 void PointMap::ClearMap()
 {
     cell_map.clear();
+}
+
+void PointMap::UpdateCellDimensions()
+{
+    const double map_x_min = (x_num_cells * x_cell_size) / -2;
+    const double map_y_min = (y_num_cells * y_cell_size) / -2;
+    
+    for( auto cell : cell_map )
+    {
+        const int& x_index = cell.first.first;
+        const int& y_index = cell.first.second;
+        cell.second.SetSize(x_cell_size, y_cell_size);
+
+        std::pair< double, double > left_edge_point, right_edge_point;
+
+        //think about looking at a cube from a left angle and a right angle. If looking from the left.
+        //You need these points to find the window..
+        //   *
+        //  / [ ]
+        // /     *
+        //      /
+        //From the right you need these.
+        //      *
+        //   [ ] \
+        //  *     \
+        //   \
+        //that's what is going on here in the indexing.
+        if(cell.first.first < x_num_cells / 2)
+        {
+            left_edge_point.first = map_x_min + (x_index * x_cell_size);
+            left_edge_point.second = map_y_min + (y_index * y_cell_size);
+
+            right_edge_point.first = map_x_min + ((x_index+1) * x_cell_size);
+            right_edge_point.second = map_y_min + ((y_index+1) * y_cell_size);
+        }
+        else
+        {
+            left_edge_point.first = map_x_min + (x_index * x_cell_size);
+            left_edge_point.second = map_y_min + ((y_index+1) * y_cell_size);
+
+            right_edge_point.first = map_x_min + ((x_index+1) * x_cell_size);
+            right_edge_point.second = map_y_min + (y_index * y_cell_size);
+        }
+        double a1 = atan(left_edge_point.second / left_edge_point.first);
+        double a2 = atan(right_edge_point.second / right_edge_point.first);
+        double r = sqrt( pow((left_edge_point.first + right_edge_point.first)/2, 2) + 
+                         pow((left_edge_point.second + right_edge_point.second)/2, 2));
+
+        cell.second.SetAngularWindow(a1, a2);
+        cell.second.SetDistance(r);
+    }
 }

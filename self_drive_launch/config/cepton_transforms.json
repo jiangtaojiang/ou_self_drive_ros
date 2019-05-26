@@ -1,8 +1,9 @@
 {
-    "8546": {
-        "frame_id": "cepton_center",
+    "8547": {
+        "frame_id": "cepton_front_center",
         "topic_name": "LIDAR/FrontCenter",
         "rotation": [0, 0, 0],
-        "translation": [0, 0, 0]
+        "translation": [0.5, 0, 0]
     }
 }
+

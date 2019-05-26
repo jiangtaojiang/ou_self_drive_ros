@@ -24,6 +24,8 @@ public:
 
     std::pair<double, double> GetCellSize();
 
+    void SetHeightCutOff(const double& z) {z_cut_off = z;}
+
     int AddLIDARPoints(const std::vector<Point>& points);
 
     void RemoveUpdate(int ID);
@@ -33,9 +35,13 @@ public:
     std::map< std::pair< int, int> , PointMapCell> cell_map;
 
 private:
+    void UpdateCellDimensions();
+
     double x_size, y_size;
     int x_num_cells, y_num_cells;
     double x_cell_size, y_cell_size;
+    double z_cut_off;
+    
 
     unsigned int update_counter;
     

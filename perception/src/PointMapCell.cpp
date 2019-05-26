@@ -20,17 +20,33 @@ void PointMapCell::RemoveUpdate(const int& id)
 }
 void PointMapCell::UpdateMetaData()
 {
+    bool first = true;
+    meta_data.max_z = 0;
+    meta_data.min_z = 0;
+
     //for every point in the updates.
     for( auto update : updates )
     {
-        for( auto point : update.points)
+        if(first)
         {
-            if(point.z < meta_data.min_z)
-                meta_data.min_z = point.z;
-            if(point.z > meta_data.max_z)
-                meta_data.max_z = point.z;
+            meta_data.max_z = update.data.max_z;
+            meta_data.min_z = update.data.min_z;
+            first = false;
+            continue;
         }
+
+        if(update.data.max_z > meta_data.max_z)
+            meta_data.max_z = update.data.max_z;
+        if(update.data.min_z < meta_data.min_z)
+            meta_data.min_z = update.data.min_z;
     }
+}
+void PointMapCell::SetSize(const double& x, const double& y)
+{
+    x_size = x;
+    y_size = y;
+
+    
 }
 
 void PointMapCell::AddUpdate(const int& update_id, const std::vector<Point>& points)

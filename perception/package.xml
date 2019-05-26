@@ -12,5 +12,6 @@
   <depend>roscpp</depend>
   <depend>rosmsg</depend>
   <depend>pcl_ros</depend>
+  <depend>yolo</depend>
 
 </package>

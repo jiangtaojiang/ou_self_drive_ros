@@ -22,7 +22,19 @@ public:
     void AddUpdate(const int& update_id, const std::vector<Point>& points);
     void RemoveUpdate(const int& id);
     void UpdateMetaData();
+    void SetSize(const double& x, const double& y);
+    void SetAngularWindow(const double& left, const double& right) { a1 = left; a2 = right;}
+    void SetDistance(const double& distance){r = distance;}
+    double GetDistance(){return r;}
+    std::pair<double, double> GetAngularWindow(){return std::pair<double, double> (a1,a2);}
 
     std::vector<PointUpdate> updates;
     MetaData meta_data;
+    
+private:
+    double r;
+    double x_size;
+    double y_size;
+    double a1;
+    double a2;
 };
