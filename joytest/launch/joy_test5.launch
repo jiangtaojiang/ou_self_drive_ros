@@ -19,7 +19,7 @@ rosrun rosserial_python serial_node.py /dev/ttyUSB0
   </node>
 
 
-  <node pkg="gem_speed_control" name="gem_speed_control" type="gem_speed_control" >
+  <node pkg="gem_speed_control" name="gem_speed_control" type="gem_speed_control" output="screen" >
   <remap from = "brake_cmd" to = "brake"/>
   <remap from = "throttle_cmd" to = "acc"/>
   </node>
