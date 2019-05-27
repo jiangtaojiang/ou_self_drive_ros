@@ -11,7 +11,7 @@
   </include>
 
   <node if="$(arg rviz)" pkg="rviz" type="rviz" name="viz" respawn="true" args="-d $(find self_drive_launch)/rviz/cepton_test.rviz" />
-  <node pkg="tf2_ros" type="static_transform_publisher" name="footprint_to_cepton" args="1.0 0 2.0 0 0 0 base_footprint cepton" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="footprint_to_cepton" args="1.0 0 2.0 -1.571 0 0 base_footprint cepton" />
 
 </launch>
 
