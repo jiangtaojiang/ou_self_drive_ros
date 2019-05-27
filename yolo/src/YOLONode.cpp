@@ -12,7 +12,7 @@
 
 #define WEIGHTS_NAME "run.weights"
 #define CONFIG_NAME "run.cfg"
-#define IMAGE_TOPIC "/camera_front/image_raw"
+#define IMAGE_TOPIC "/front_camera/image_raw"
 
 #define DEBUG
 
@@ -47,7 +47,7 @@ namespace yolo {
 		}
 		status_publisher.publish(message);
 		
-		image_subscriber = n.subscribe("/camera_front/image_raw", 1, &YOLONode::ImageTopicCallback, this);
+		image_subscriber = n.subscribe(IMAGE_TOPIC, 1, &YOLONode::ImageTopicCallback, this);
 		
     }
     YOLONode::~YOLONode()
