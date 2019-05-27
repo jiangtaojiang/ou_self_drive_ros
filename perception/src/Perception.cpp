@@ -22,7 +22,7 @@ namespace perception {
       map_pub = n.advertise<visualization_msgs::MarkerArray>("perception/map", 1);
 
       camera_transform_found = false;
-      yolo_sub = n.subscribe("yolo/detections", 1, &Perception::LIDARCallback0, this);
+      yolo_sub = n.subscribe("yolo/detections", 1, &Perception::YOLOCallback, this);
       yolo_detection_window_pub = n.advertise<visualization_msgs::MarkerArray>("perception/object_windows", 1);
       yolo_detection_arrow_pub = n.advertise<visualization_msgs::MarkerArray>("perception/object_pointers", 1);
 
@@ -260,11 +260,12 @@ namespace perception {
       pointer.action = visualization_msgs::Marker::ADD;
 
       pointer.ns = "object_arrows";
-      pointer.header.frame_id = "front_camera";
+      pointer.header.frame_id = "camera_front";
       pointer.header.stamp = ros::Time();
 
       arrows.markers.push_back(pointer);
     }
+    yolo_detection_arrow_pub.publish(arrows);
   }
 
 }//end of namespace
