@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   rosmsg
   pcl_ros
   yolo
+  nodelet
 )
 
 catkin_package()
@@ -14,17 +15,24 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-#Compile a node written in C++
-add_executable(perception
+add_library(${PROJECT_NAME}
+  src/perception_nodelet.cpp
   src/Point.cpp
   src/PointMap.cpp
   src/PointMapCell.cpp
   src/Perception.cpp
-  src/perception_node.cpp
 )
-add_dependencies(perception
+add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
-target_link_libraries(perception
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+)
+
+add_executable(${PROJECT_NAME}_node
+  src/perception_node.cpp
+)
+target_link_libraries(${PROJECT_NAME}_node
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
 )

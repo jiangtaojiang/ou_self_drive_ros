@@ -13,5 +13,9 @@
   <depend>rosmsg</depend>
   <depend>pcl_ros</depend>
   <depend>yolo</depend>
+  <depend>nodelet</depend>
 
+  <export>
+    <nodelet plugin="${prefix}/nodelets.xml" />
+  </export>
 </package>
