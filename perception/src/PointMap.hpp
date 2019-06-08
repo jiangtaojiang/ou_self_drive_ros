@@ -34,8 +34,10 @@ public:
 
     std::map< std::pair< int, int> , PointMapCell> cell_map;
 
-private:
     void UpdateCellDimensions();
+
+private:
+    
 
     double x_size, y_size;
     int x_num_cells, y_num_cells;

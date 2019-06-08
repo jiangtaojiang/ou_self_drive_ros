@@ -109,6 +109,7 @@ int PointMap::AddLIDARPoints(const std::vector<Point>& points)
         cell_map[it.first].AddUpdate(update_counter, it.second);
     }
 
+    UpdateCellDimensions();
     return update_counter;
 }
 
@@ -138,11 +139,14 @@ void PointMap::UpdateCellDimensions()
     const double map_x_min = (x_num_cells * x_cell_size) / -2;
     const double map_y_min = (y_num_cells * y_cell_size) / -2;
     
-    for( auto cell : cell_map )
+    std::map< std::pair< int, int> , PointMapCell>::iterator it = cell_map.begin();
+    while( it != cell_map.end() )
     {
-        const int& x_index = cell.first.first;
-        const int& y_index = cell.first.second;
-        cell.second.SetSize(x_cell_size, y_cell_size);
+        PointMapCell& cell = it->second;
+        const std::pair< int, int>& index = it->first;
+        const int& x_index = index.first;
+        const int& y_index = index.second;
+        cell.SetSize(x_cell_size, y_cell_size);
 
         std::pair< double, double > left_edge_point, right_edge_point;
 
@@ -158,7 +162,7 @@ void PointMap::UpdateCellDimensions()
         //  *     \
         //   \
         //that's what is going on here in the indexing.
-        if(cell.first.first < x_num_cells / 2)
+        if(index.first < x_num_cells / 2)
         {
             left_edge_point.first = map_x_min + (x_index * x_cell_size);
             left_edge_point.second = map_y_min + (y_index * y_cell_size);
@@ -179,7 +183,9 @@ void PointMap::UpdateCellDimensions()
         double r = sqrt( pow((left_edge_point.first + right_edge_point.first)/2, 2) + 
                          pow((left_edge_point.second + right_edge_point.second)/2, 2));
 
-        cell.second.SetAngularWindow(a1, a2);
-        cell.second.SetDistance(r);
+        cell.a1 = a1 * -1;
+        cell.a2 = a2 * -1;
+        cell.SetDistance(r);
+        it++;
     }
 }

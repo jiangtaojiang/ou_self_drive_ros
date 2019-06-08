@@ -30,11 +30,13 @@ public:
 
     std::vector<PointUpdate> updates;
     MetaData meta_data;
+
+    double a1;
+    double a2;
     
 private:
     double r;
     double x_size;
     double y_size;
-    double a1;
-    double a2;
+
 };

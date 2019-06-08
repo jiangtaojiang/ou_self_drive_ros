@@ -45,6 +45,8 @@ namespace perception {
     ros::Publisher map_pub;
     std::vector< ros::Subscriber > lidar_subs;
 
+    ros::Publisher objects_pub;
+
     ros::Subscriber yolo_sub;
     ros::Publisher yolo_detection_window_pub;
     ros::Publisher yolo_detection_arrow_pub;

@@ -6,6 +6,7 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <math.h>
+#include <perception/Objects.h>
 
 #define POINTER_LENGTH 1
 
@@ -20,6 +21,8 @@ namespace perception {
       lidar_subs.push_back(lidar1);
 
       map_pub = n.advertise<visualization_msgs::MarkerArray>("perception/map", 1);
+
+      objects_pub = n.advertise<perception::Objects>("perception/Objects", 1);
 
       camera_transform_found = false;
       yolo_sub = n.subscribe("yolo/detections", 1, &Perception::YOLOCallback, this);
@@ -50,9 +53,11 @@ namespace perception {
       }
     }*/
     std::vector<double> distances;
+    point_map.UpdateCellDimensions();
     for( auto detection : detections->detections)
     {
       double angle_h = (detection.angle_left + detection.angle_right) / 2;
+      //printf("Angle: %0.3f\n", angle_h);
     
       double distance = 100;
       for( auto cell : point_map.cell_map)
@@ -60,11 +65,17 @@ namespace perception {
         const int& cell_x = cell.first.first;
         const int& cell_y = cell.first.second;
         std::pair<double, double> angular_window = cell.second.GetAngularWindow();
+        //printf("Window L: %0.3f\t Window R: %0.3f\n", cell.second.a2, cell.second.a1 );
         if( angular_window.first > angle_h || angular_window.second < angle_h)
           continue;
 
+        if( cell.second.meta_data.max_z - cell.second.meta_data.min_z < 0.5)
+          continue;
+
+		    //printf("cell intersected");
+
         if( cell.second.GetDistance() < distance)
-          distance = cell.second.GetDistance();
+          distance = cell.second.GetDistance() - 0.5;
       }
       distances.push_back(distance);
     }
@@ -75,6 +86,7 @@ namespace perception {
 
   void Perception::LIDARCallback(int id, const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& point_cloud)
   {
+    point_map.ClearMap();
     if(!lidar_transform_found)
     {
       try{
@@ -145,7 +157,7 @@ namespace perception {
         cube.type = visualization_msgs::Marker::CUBE;
         cube.action = visualization_msgs::Marker::ADD;
         cube.color.a = 0.3;
-        if(cell.second.meta_data.max_z - cell.second.meta_data.min_z > 0.75)
+        if(cell.second.meta_data.max_z - cell.second.meta_data.min_z > 0.5)
         {
           cube.color.a = .5;
           cube.color.r = 1;
@@ -166,7 +178,6 @@ namespace perception {
       
         cubes.markers.push_back(cube);
     }
-    point_map.ClearMap();
     map_pub.publish(cubes);
   }
   
@@ -234,6 +245,8 @@ namespace perception {
     point1.y = 0;
     point1.z = 0;
     int i = 0;
+    perception::Objects objects_update;
+    objects_update.header.stamp = ros::Time();
     for( auto detection : detections->detections)
     {
       eYOLOClassification object_classification = (eYOLOClassification)detection.class_id;
@@ -245,9 +258,9 @@ namespace perception {
       double angle_h = (detection.angle_left + detection.angle_right) / 2;
       double angle_v = (detection.angle_top + detection.angle_bottom) / 2;
 
-      point2.x = point1.x + (cos(angle_h) * distances[i]);
-      point2.y = point1.y + (sin(angle_h) * distances[i]);
-      point2.z = point1.z + (sin(angle_v) * distances[i]);
+      point2.x = point1.x + (cos(angle_h) * (distances[i]-.5));
+      point2.y = point1.y + (sin(angle_h) * (distances[i]-.5));
+      point2.z = point1.z + (sin(angle_v) * (distances[i]-.5));
 
       pointer.points.push_back(point2);
 
@@ -263,8 +276,18 @@ namespace perception {
       pointer.header.frame_id = "camera_front";
       pointer.header.stamp = ros::Time();
 
+      printf("Object %i \t Distance: %0.3f\n", detection.class_id, distances[i-1]);
+
+      perception::Object object;
+      object.class_id = detection.class_id;
+      object.confidence = detection.confidence;
+      object.x = point2.x;
+      object.y = point2.y;
+      objects_update.objects.push_back(object);
+
       arrows.markers.push_back(pointer);
     }
+    objects_pub.publish(objects_update);
     yolo_detection_arrow_pub.publish(arrows);
   }
 
