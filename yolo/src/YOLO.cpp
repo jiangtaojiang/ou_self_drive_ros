@@ -3,7 +3,7 @@
 #include "../darknet/darknet.h"
 #define NUM_CLASSES 7
 image **alphabet;
-char *coco_names[] = {"person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow"};
+char *coco_names[] = {"Construction Barrel", "One Way Left", "One Way Right", "Road Closed", "Stop Sign", "Pedestrian", "No Turns", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow"};
 
 YOLO::YOLO()
 {
@@ -141,7 +141,7 @@ std::vector<Detection_t> YOLO::Detect(IplImage* ipl_img)
     }
     if(mDrawDetections)
     {
-        draw_detections(sized, dets, num_detections, mDetectionThreshold, coco_names, alphabet, 20);
+        draw_detections(sized, dets, num_detections, mDetectionThreshold, coco_names, alphabet, NUM_CLASSES);
         mMutex.lock();
         if(detected_ipl)
             cvReleaseImage(&detected_ipl);

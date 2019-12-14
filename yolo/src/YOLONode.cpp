@@ -12,11 +12,11 @@
 
 #define WEIGHTS_NAME "run.weights"
 #define CONFIG_NAME "run.cfg"
-#define IMAGE_TOPIC "/camera_front/image_raw"
+#define IMAGE_TOPIC "/front_camera/image_raw"
 
 #define DEBUG
 
-const static float CAMERA_HORIZ_FOV = 1.04;
+const static float CAMERA_HORIZ_FOV = 0.80;
 const static float HORIZ_OFFSET = CAMERA_HORIZ_FOV / 2;
 const static float CAMERA_VERT_FOV = 0.78; //horiz FOV * height / width; 1.04 * 480/640
 const static float VERT_OFFSET = CAMERA_VERT_FOV / 2;
@@ -47,7 +47,7 @@ namespace yolo {
 		}
 		status_publisher.publish(message);
 		
-		image_subscriber = n.subscribe("/camera_front/image_raw", 1, &YOLONode::ImageTopicCallback, this);
+		image_subscriber = n.subscribe(IMAGE_TOPIC, 1, &YOLONode::ImageTopicCallback, this);
 		
     }
     YOLONode::~YOLONode()

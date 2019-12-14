@@ -23,7 +23,7 @@ class GrayExtract(object):
         line_data = gray_image[399:400,1:640]
  	point = Int32MultiArray();
         point.data = np.sum(line_data,axis = 0)
-        gray_image[399:400,1:640]=255
+        gray_image[99:100,1:640]=255
         self._gray_pub.publish(self._bridge.cv2_to_imgmsg(gray_image, 'mono8'))
         self._line_pub.publish(point)
 
