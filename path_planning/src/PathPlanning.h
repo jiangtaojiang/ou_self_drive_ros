@@ -17,8 +17,10 @@ namespace path_planning {
   private:
 	// Node-specific stuff here
     void ResetVehicleControlMsg();
+    void timerCallback(const ros::TimerEvent& event);
     
     ros::Publisher vehicle_control_publisher;
+    ros::Timer timer_;
     geometry_msgs::Twist vehicle_control_msg;
   };
 
