@@ -35,10 +35,7 @@ class LaneDetection
 
     std::vector<cv::Vec2f> detectStopLine(const cv::Mat& bin_img);
 
-    geometry_msgs::Point32 projectPoint(const image_geometry::PinholeCameraModel& model,
-                                        const tf::StampedTransform& transform,
-                                        const tf::Vector3& cam_los_vect,
-                                        const cv::Point2d& p);
+    geometry_msgs::Point32 projectPoint(const image_geometry::PinholeCameraModel& model, const cv::Point2d& p);
 
     tf::TransformListener listener_;
 
@@ -53,9 +50,10 @@ class LaneDetection
     LaneDetectionConfig cfg_;
 
     sensor_msgs::CameraInfo camera_info_;
-    std::vector<cv::Rect> bboxes;
+    std::vector<cv::Rect> bboxes; // Bounding boxes of detected lane segments
     int downsample_count;
-
+    tf::StampedTransform camera_transform_; // Coordinate transformation from footprint to camera
+    bool looked_up_camera_transform_;
 };
 
 }
