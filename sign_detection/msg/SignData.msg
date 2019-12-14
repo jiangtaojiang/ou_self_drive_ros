@@ -1,2 +1,0 @@
-string sign_type
-geometry_msgs/Point sign_position
